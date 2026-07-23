@@ -7,6 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cable
 import androidx.compose.material.icons.filled.Download
@@ -74,7 +76,8 @@ fun HomeScreen(onSendClick: () -> Unit, onReceiveClick: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(32.dp),
+                .padding(32.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -84,8 +87,27 @@ fun HomeScreen(onSendClick: () -> Unit, onReceiveClick: () -> Unit) {
                 modifier = Modifier.size(100.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(32.dp))
-            
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                "What this does",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                "One device plays a test tone through its headphone jack; the " +
+                    "other listens through the mic input and checks what it " +
+                    "hears, packet by packet, against a checksum. That tells " +
+                    "you whether the cable (and the audio path around it) is " +
+                    "actually passing data cleanly — not just whether audio " +
+                    "\"sounds\" fine.",
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Text(
                 "Select a mode for this device",
                 style = MaterialTheme.typography.titleMedium,

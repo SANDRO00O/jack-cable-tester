@@ -16,7 +16,10 @@ data class ReceiverStats(
     val validReceived: Int = 0,
     val crcErrors: Int = 0,
     val dataMismatches: Int = 0,
-    val isListening: Boolean = false
+    val isListening: Boolean = false,
+    // Cable quality score (0-100) recorded after each packet, oldest first.
+    // Powers the live chart on the Receive screen.
+    val history: List<Float> = emptyList()
 )
 
 class AudioReceiver {
@@ -94,18 +97,20 @@ class AudioReceiver {
                     val seq = ByteBuffer.wrap(byteRing, 4, 4).int
                     val payload = byteRing.copyOfRange(8, 40)
                     
-                    val currentStats = stats.value
-                    
-                    if (crcReceived == crcCalculated) {
-                        val expected = expectedPacketsMap[seq]
-                        if (expected != null && expected.payload.contentEquals(payload)) {
-                            stats.value = currentStats.copy(validReceived = currentStats.validReceived + 1)
-                        } else {
-                            stats.value = currentStats.copy(dataMismatches = currentStats.dataMismatches + 1)
-                        }
-                    } else {
-                        stats.value = currentStats.copy(crcErrors = currentStats.crcErrors + 1)
+                    val current = stats.value
+                    val updated = when {
+                        crcReceived != crcCalculated ->
+                            current.copy(crcErrors = current.crcErrors + 1)
+                        expectedPacketsMap[seq]?.payload?.contentEquals(payload) == true ->
+                            current.copy(validReceived = current.validReceived + 1)
+                        else ->
+                            current.copy(dataMismatches = current.dataMismatches + 1)
                     }
+                    val rate = if (updated.totalExpected > 0) {
+                        updated.validReceived.toFloat() / updated.totalExpected.toFloat() * 100f
+                    } else 0f
+                    stats.value = updated.copy(history = updated.history + rate)
+
                     byteRing[0] = 0 // Consume magic
                 }
             }

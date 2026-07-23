@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
@@ -21,9 +23,9 @@ import kotlinx.coroutines.launch
 fun SendScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
     val transmitter = remember { AudioTransmitter() }
-    
+
     var numPackets by remember { mutableStateOf(100f) }
     var currentUri by remember { mutableStateOf<Uri?>(null) }
     var isTransmitting by remember { mutableStateOf(false) }
@@ -52,15 +54,29 @@ fun SendScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            InfoBox(
+                "This device plays the test signal out through its headphone " +
+                    "jack. Plug the cable in here, and have the other end " +
+                    "(same phone looped back, or a second phone) running the " +
+                    "Receiver at the same time."
+            )
+
             Text(
                 "Step 1: Generate Test File",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
-            
+            Text(
+                "This creates a small reference file of numbered test packets. " +
+                    "More packets means a longer, more thorough test.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             Text("Number of Packets: ${numPackets.toInt()}")
             Slider(
                 value = numPackets,
@@ -68,7 +84,7 @@ fun SendScreen(onBack: () -> Unit) {
                 valueRange = 10f..1000f,
                 steps = 99
             )
-            
+
             Button(
                 onClick = { createDocLauncher.launch("jack_test_file.jct") },
                 modifier = Modifier.fillMaxWidth()
@@ -82,24 +98,31 @@ fun SendScreen(onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary
                 )
-                
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 Text(
                     "Step 2: Transmit Audio",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
-                
+                Text(
+                    "Encodes each packet as a pair of audio tones and plays it " +
+                        "out loud. The receiver decodes those tones back into " +
+                        "packets and checks them against the same reference file.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
                 if (isTransmitting) {
                     LinearProgressIndicator(
                         progress = { if (total > 0) progress.toFloat() / total.toFloat() else 0f },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Text("Sending packet $progress / $total")
-                    
+
                     Button(
-                        onClick = { 
+                        onClick = {
                             transmitter.stop()
                             isTransmitting = false
                         },
